@@ -2,7 +2,7 @@ name: Docs
 
 # Adapted from neuroinformatics-unit/movement's docs workflow.
 # The build is explicit because NIU's composite action assumes a root-level
-# Python project; this repository keeps its package and docs in allsorted/.
+# Python project; this repository keeps its package and docs in spikesorted/.
 on:
   push:
     branches: [main]
@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: allsorted
+        working-directory: spikesorted
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: '3.13'
           cache: pip
-          cache-dependency-path: allsorted/pyproject.toml
+          cache-dependency-path: spikesorted/pyproject.toml
 
       - name: Install documentation dependencies
         run: |
@@ -50,7 +50,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: docs-build
-          path: allsorted/docs/build/html/
+          path: spikesorted/docs/build/html/
           if-no-files-found: error
           # Preserve Sphinx's .nojekyll file for GitHub Pages.
           include-hidden-files: true
@@ -63,7 +63,7 @@ jobs:
       contents: write
     # Pull requests and merge queues only build; forks never publish here.
     if: |
-      github.repository == 'neuroinformatics-unit/allsorted' &&
+      github.repository == 'neuroinformatics-unit/spikesorted' &&
       ((github.event_name == 'push' && github.ref_type == 'tag') ||
        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
        (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))

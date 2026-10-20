@@ -1,4 +1,4 @@
-# allsorted
+# spikesorted
 
 An end-to-end pipeline for spike sorting extracellular electrophysiology recordings.
 

@@ -20,7 +20,7 @@ autodoc_mock_imports = []
 # use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath("../.."))
 
-project = "allsorted"
+project = "spikesorted"
 copyright = "2022, Joe Ziminski"
 author = "Joe Ziminski"
 try:
@@ -88,7 +88,7 @@ exclude_patterns = [
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 html_theme = "pydata_sphinx_theme"
-html_title = "allsorted"
+html_title = "spikesorted"
 
 # Customize the theme
 html_theme_options = {
@@ -98,7 +98,7 @@ html_theme_options = {
             # Label for this link
             "name": "GitHub",
             # URL where the link will redirect
-            "url": "https://github.com/neuroinformatics-unit/allsorted",  # required
+            "url": "https://github.com/neuroinformatics-unit/spikesorted",  # required
             # Icon class (if "type": "fontawesome"),
             # or path to local image (if "type": "local")
             "icon": "fa-brands fa-github",
@@ -107,7 +107,7 @@ html_theme_options = {
         }
     ],
     "logo": {
-        "text": "allsorted.",
+        "text": "spikesorted.",
     },
 }
 

@@ -1,4 +1,4 @@
-files: ^allsorted/
+files: ^spikesorted/
 exclude: '(^|/)(conf\.py$|\.venv-docs/)'
 
 # Configuring https://pre-commit.ci/
@@ -33,21 +33,21 @@ repos:
       rev: v0.16.10
       hooks:
         - id: ruff
-          args: [ --config=allsorted/pyproject.toml ]
+          args: [ --config=spikesorted/pyproject.toml ]
         - id: ruff-format
-          args: [ --config=allsorted/pyproject.toml ]
+          args: [ --config=spikesorted/pyproject.toml ]
     - repo: https://github.com/pre-commit/mirrors-mypy
       rev: v1.14.1
       hooks:
           - id: mypy
-            args: [--config-file=allsorted/pyproject.toml]
+            args: [--config-file=spikesorted/pyproject.toml]
             additional_dependencies:
                 - types-setuptools
     - repo: https://github.com/mgedmin/check-manifest
       rev: "0.50"
       hooks:
           - id: check-manifest
-            args: [--no-build-isolation, allsorted]
+            args: [--no-build-isolation, spikesorted]
             additional_dependencies:
               - setuptools>=77
               - wheel
@@ -57,6 +57,6 @@ repos:
       rev: v2.4.3
       hooks:
       - id: codespell
-        args: [--toml=allsorted/pyproject.toml]
+        args: [--toml=spikesorted/pyproject.toml]
         additional_dependencies:
         - tomli

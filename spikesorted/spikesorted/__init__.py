@@ -1,7 +1,7 @@
 from importlib.metadata import PackageNotFoundError, version
 
 try:
-    __version__ = version("allsorted")
+    __version__ = version("spikesorted")
 except PackageNotFoundError:
     # package is not installed
     pass
