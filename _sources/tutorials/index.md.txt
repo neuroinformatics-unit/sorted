@@ -1,6 +1,6 @@
 # Tutorials
 
-This section contains information on running the sorted pipeline.
+This section contains information on running the allsorted pipeline.
 
 ```{toctree}
 :maxdepth: 1

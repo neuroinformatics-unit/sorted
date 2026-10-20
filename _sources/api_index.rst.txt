@@ -4,7 +4,7 @@ API
 math
 ----
 
-.. currentmodule:: sorted.math
+.. currentmodule:: allsorted.math
 
 .. autosummary::
     :toctree: api_generated
@@ -16,7 +16,7 @@ math
 greetings
 ---------
 
-.. currentmodule:: sorted.greetings
+.. currentmodule:: allsorted.greetings
 
 .. autosummary::
     :toctree: api_generated

@@ -1,7 +1,7 @@
 :html_theme.sidebar_secondary.remove:
 
-sorted
-======
+allsorted
+=========
 
 .. raw:: html
    :file: includes/home.html

@@ -1,7 +1,7 @@
 /* Decorative, synthetic signals only. No recording data or scientific processing. */
 document.addEventListener("DOMContentLoaded", () => {
   "use strict";
-  const home = document.querySelector(".sorted-home");
+  const home = document.querySelector(".allsorted-home");
   if (!home) return;
   const canvas = document.getElementById("spike-field");
   const ctx = canvas.getContext("2d");
