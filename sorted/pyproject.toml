@@ -32,7 +32,9 @@ dev = [
   "tox",
   "mypy",
   "pre-commit",
-  "ruff",
+  "ruff==0.16.10",
+  "codespell",
+  "check-manifest",
   "setuptools-scm",
 ]
 
@@ -59,6 +61,7 @@ filterwarnings = [
 ]
 
 [tool.setuptools_scm]
+search_parent_directories = true
 
 [tool.check-manifest]
 ignore = [
@@ -73,23 +76,41 @@ ignore = [
 
 
 [tool.ruff]
-line-length = 79
-exclude = ["__init__.py", "build", ".eggs"]
-lint.select = [
-  "E",   # pycodestyle errors
-  "F",   # Pyflakes
-  "I",   # isort
-  # You can see what all the rules do here: https://docs.astral.sh/ruff/rules/
-  # Some additional ruff rules that might be useful (uncomment to enable)
-  #"UP",  # pyupgrade
-  #"B",   # flake8 bugbear
-  #"SIM", # flake8 simplify
-  #"C90", # McCabe complexity
-]
+line-length = 88
+extend-exclude = ["__init__.py", "build", ".eggs", ".venv-docs"]
 fix = true
 
+[tool.ruff.lint]
+# See https://docs.astral.sh/ruff/rules/
+ignore = [
+  "D203", # one blank line before class
+  "D213", # multi-line-summary second line
+]
+select = [
+  "E",      # pycodestyle errors
+  "F",      # Pyflakes
+  "UP",     # pyupgrade
+  "I",      # isort
+  "B",      # flake8 bugbear
+  "SIM",    # flake8 simplify
+  "C90",    # McCabe complexity
+  "D",      # pydocstyle
+  "NPY201", # checks for syntax that was deprecated in numpy2.0
+]
+per-file-ignores = { "**/tests/**" = [
+  "D100", # missing docstring in public module
+  "D205", # missing blank line between summary and description
+  "D103", # missing docstring in public function
+], "**/examples/**" = [
+  "B018", # Found useless expression
+  "D103", # Missing docstring in public function
+  "D400", # first line should end with a period.
+  "D415", # first line should end with a period, question mark...
+  "D205", # missing blank line between summary and description
+] }
+
 [tool.ruff.format]
-docstring-code-format = true # Also format code in docstrings (e.g. examples)
+docstring-code-format = true # Also format code in docstrings
 
 [tool.tox]
 legacy_tox_ini = """
@@ -118,5 +139,5 @@ commands =
 
 
 [tool.codespell]
-skip = '.git'
+skip = '.git,.tox,.venv-docs'
 check-hidden = true

@@ -1,4 +1,5 @@
-exclude: 'conf.py'
+files: ^sorted/
+exclude: '(^|/)(conf\.py$|\.venv-docs/)'
 
 # Configuring https://pre-commit.ci/
 ci:
@@ -8,6 +9,11 @@ repos:
     - repo: https://github.com/pre-commit/pre-commit-hooks
       rev: v6.0.0
       hooks:
+          - id: check-added-large-files
+          - id: check-case-conflict
+          - id: check-symlinks
+          - id: check-yaml
+          - id: debug-statements
           - id: check-docstring-first
           - id: check-executables-have-shebangs
           - id: check-merge-conflict
@@ -17,24 +23,31 @@ repos:
             args: [--fix=lf]
           - id: requirements-txt-fixer
           - id: trailing-whitespace
+    - repo: https://github.com/pre-commit/pygrep-hooks
+      rev: v1.10.0
+      hooks:
+        - id: rst-backticks
+        - id: rst-directive-colons
+        - id: rst-inline-touching-normal
     - repo: https://github.com/astral-sh/ruff-pre-commit
       rev: v0.16.10
       hooks:
         - id: ruff
-          args: [ --config=pyproject.toml ]
+          args: [ --config=sorted/pyproject.toml ]
         - id: ruff-format
-          args: [ --config=pyproject.toml ]
+          args: [ --config=sorted/pyproject.toml ]
     - repo: https://github.com/pre-commit/mirrors-mypy
-      rev: v1.13.0
+      rev: v1.14.1
       hooks:
           - id: mypy
+            args: [--config-file=sorted/pyproject.toml]
             additional_dependencies:
                 - types-setuptools
     - repo: https://github.com/mgedmin/check-manifest
       rev: "0.50"
       hooks:
           - id: check-manifest
-            args: [--no-build-isolation]
+            args: [--no-build-isolation, sorted]
             additional_dependencies:
               - setuptools>=77
               - wheel
@@ -44,5 +57,6 @@ repos:
       rev: v2.4.3
       hooks:
       - id: codespell
+        args: [--toml=sorted/pyproject.toml]
         additional_dependencies:
         - tomli
