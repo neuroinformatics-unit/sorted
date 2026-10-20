@@ -1,7 +1,7 @@
 [project]
-name = "sorted"
+name = "allsorted"
 authors = [{name = "Joe Ziminski", email= "joseph.j.ziminski@gmail.com"}]
-description = "`sorted` is an end-to-end spike sorting pipeline"
+description = "`allsorted` is an end-to-end spike sorting pipeline"
 readme = "README.md"
 requires-python = ">=3.11.0"
 dynamic = ["version"]
@@ -62,12 +62,12 @@ build-backend = "setuptools.build_meta"
 include-package-data = true
 
 [tool.setuptools.packages.find]
-include = ["sorted*"]
+include = ["allsorted*"]
 exclude = ["tests", "docs*"]
 
 
 [tool.pytest.ini_options]
-addopts = "--cov=sorted"
+addopts = "--cov=allsorted"
 filterwarnings = [
     "error",
 ]
@@ -146,7 +146,7 @@ passenv =
 extras =
     dev
 commands =
-    pytest -v --color=yes --cov=sorted --cov-report=xml
+    pytest -v --color=yes --cov=allsorted --cov-report=xml
 """
 
 

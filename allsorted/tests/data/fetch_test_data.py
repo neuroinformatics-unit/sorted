@@ -54,7 +54,7 @@ def fetch(entry, verify_only):
         try:
             url = urlsplit(entry["url"])
             url = urlunsplit(url._replace(path=quote(url.path, safe="/%")))
-            request = Request(url, headers={"User-Agent": "sorted-test-data/1"})
+            request = Request(url, headers={"User-Agent": "allsorted-test-data/1"})
             with urlopen(request, timeout=60) as response, partial.open("wb") as out:
                 shutil.copyfileobj(response, out, CHUNK)
             if not valid(partial, entry):
