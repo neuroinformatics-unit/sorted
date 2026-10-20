@@ -1,0 +1,52 @@
+/* Scoped presentation layer; normal Sphinx reference pages retain their theme. */
+:root { --signal-mint: #a7f3ce; --signal-ink: #091715; }
+.navbar-brand .logo__title { font-weight: 800; letter-spacing: -.06em; }
+.bd-header { border-bottom: 1px solid #64877930; box-shadow: none; }
+body:has(.sorted-home) { background: var(--signal-ink); color: #edf5ef; }
+body:has(.sorted-home) .bd-header { background: #091715 !important; --pst-color-text-base: #edf5ef; --pst-color-text-muted: #c1d4cb; --pst-color-background: #091715; --pst-color-surface: #10241f; }
+body:has(.sorted-home) .bd-header a, body:has(.sorted-home) .bd-header button { color: #dce9e2; }
+body:has(.sorted-home) .bd-container, body:has(.sorted-home) .bd-page-width, body:has(.sorted-home) .bd-main, body:has(.sorted-home) .bd-content, body:has(.sorted-home) .bd-article-container { max-width: none; width: 100%; padding: 0; margin: 0; }
+body:has(.sorted-home) .bd-article-container { max-width: none !important; flex: 1 1 100% !important; }
+body:has(.sorted-home) .bd-article { padding: 0 !important; }
+body:has(.sorted-home) .prev-next-footer { display: none; }
+body:has(.sorted-home) .bd-sidebar-primary, body:has(.sorted-home) .bd-sidebar-secondary, body:has(.sorted-home) .bd-footer, body:has(.sorted-home) .bd-header-article, body:has(.sorted-home) .bd-footer-article, body:has(.sorted-home) section > h1:first-child { display: none; }
+.sorted-home { font-family: Inter, "Segoe UI", sans-serif; overflow: hidden; }
+.sorted-home a { text-decoration: none; }
+.sorted-home h1, .sorted-home h2, .sorted-home h3 { color: #f0f6f1; font-weight: 550; }
+.eyebrow { font: 600 .68rem/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .15em; color: #9cb9aa; }
+.signal-hero { position: relative; min-height: 680px; display: flex; align-items: center; border-bottom: 1px solid #b0e8ce22; isolation: isolate; background: radial-gradient(ellipse at 78% 45%, #17473980, transparent 60%), #091715; }
+#spike-field { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; opacity: .85; }
+.hero-content { width: min(1400px, 100%); margin: auto; padding: 100px 7vw 120px; background: linear-gradient(90deg, #091715e8 10%, #09171588 45%, transparent 85%); }
+.hero-content h1 { display: block !important; font-size: clamp(3rem, 6.5vw, 6.5rem); line-height: 1.02; letter-spacing: -.07em; margin: 24px 0; max-width: 940px; }
+.hero-content h1 span { color: var(--signal-mint); }
+.hero-description { font-size: 1.08rem; line-height: 1.8; color: #b9cfc3; max-width: 650px; }
+.hero-description strong { color: #eef7f1; font-weight: 600; }
+.status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #b4f8ce; box-shadow: 0 0 12px #73f6ba80; margin-right: 9px; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 32px 0; }
+.signal-button { display: inline-flex; align-items: center; justify-content: space-between; gap: 32px; padding: 14px 22px; border-radius: 6px; font-size: .9rem; font-weight: 650; transition: background .2s, transform .2s; }
+.signal-button.primary { color: #11231b; background: var(--signal-mint); border: 1px solid var(--signal-mint); }
+.signal-button:hover { transform: translateY(-2px); }
+.signal-button.primary:hover { color: #11231b; background: #d3ffe6; }
+.hero-meta { display: flex; gap: 25px; font: .62rem ui-monospace, Consolas, monospace; letter-spacing: .12em; color: #8da99a; margin-top: 38px; }
+.signal-caption { position: absolute; bottom: 22px; left: 7vw; right: 7vw; display: flex; justify-content: flex-end; align-items: center; gap: 12px; color: #90b4a2; font: .58rem ui-monospace, Consolas, monospace; letter-spacing: .08em; }
+.signal-caption button { border: 1px solid #95c6aa50; border-radius: 4px; padding: 8px 12px; background: #0d241c; color: #c9e5d5; font: inherit; cursor: pointer; }
+.tutorial-intro { background: #0c2119; color: #c1dacb; border-radius: 12px; padding: 40px; margin: 25px 0 35px; }
+.tutorial-lead { color: #e4f8ec; font-size: clamp(2rem, 4vw, 3.3rem); line-height: 1.1; letter-spacing: -.05em; font-weight: 550; }
+.outline-badge { display: inline-block; border: 1px solid #90c5a455; padding: 7px 12px; border-radius: 25px; color: #bbe9ce; font-size: .72rem; margin-top: 12px; }
+.tutorial-outline { border-left: 2px solid #6ca98a; padding-left: 28px; }
+.tutorial-outline h2 { margin-top: 48px; }
+.tutorial-outline > span { scroll-margin-top: 100px; }
+.sorted-home :focus-visible { outline: 3px solid #defce8; outline-offset: 5px; }
+[hidden] { display: none !important; }
+@media (max-width: 959px) {
+ body:has(.sorted-home) .bd-sidebar-primary { display: block !important; background: #10241c; color: #edf5ef; }
+ body:has(.sorted-home) .bd-sidebar-primary a { color: #c1dfcd; }
+}
+@media (max-width: 800px) {
+ .signal-hero { min-height: 600px; }
+ .hero-content { padding: 80px 6vw 110px; }
+ .hero-content h1 { font-size: clamp(2.8rem, 9vw, 4.5rem); }
+ .tutorial-intro { padding: 25px; }
+ .signal-caption { font-size: .5rem; }
+}
+@media (prefers-reduced-motion: reduce) { .sorted-home *, .sorted-home *::before { scroll-behavior: auto !important; transition: none !important; } }
