@@ -36,3 +36,8 @@
   inject them into step detection kwargs unless explicitly requested.
 
 - Do not add guards or defensive validation unless the user specifically asks.
+
+## Repository layout
+
+- Use `src/spikesorted/` for Python source; keep `pyproject.toml`, `tests/`, and
+  `docs/` at repository root. Run development commands from repository root.
