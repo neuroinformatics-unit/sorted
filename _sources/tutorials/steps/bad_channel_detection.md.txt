@@ -1,0 +1,3 @@
+# Bad channel detection
+
+Coming soon...
