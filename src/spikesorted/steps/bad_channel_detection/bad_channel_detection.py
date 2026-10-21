@@ -13,7 +13,9 @@ import pandas as pd
 import scipy.signal  # noqa: F401
 import spikeinterface.preprocessing as spre
 
+from ...utils import get_num_sessions
 from ..base import BaseStep
+from .bad_channel_union import create_bad_channel_labels_union
 from .estimate_bad_channel_detection_memory_usage import (
     estimate_bad_channel_detection_memory_usage,
     estimate_filter_memory_usage,
@@ -97,6 +99,9 @@ class BadChannelDetectionStep(BaseStep):
             bad_ids_df.to_csv(bad_ids_path, index=False)
             labels_df.to_csv(labels_path, index=False)
 
+        if "concatenate_sessions" in self.config and get_num_sessions(self.recordings) > 1:
+            create_bad_channel_labels_union(self.recordings, self.project_path)
+
     def get_bad_channel_ids_filepath(self, shank_path: Path) -> Path:
         """Return the bad-channel IDs CSV path for a shank output directory."""
         return shank_path / "bad_channel_ids.csv"
@@ -142,3 +147,4 @@ class BadChannelDetectionStep(BaseStep):
     def needs_gpu(self) -> bool:
         """Report whether the configured detection method requires a GPU."""
         return False
+
