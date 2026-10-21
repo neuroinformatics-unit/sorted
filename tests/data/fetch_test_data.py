@@ -1,4 +1,4 @@
-"""Download the pinned test datasets using only the Python standard library."""
+"""Download pinned raw data and prepare the SpikeInterface example recording."""
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -14,7 +14,7 @@ import zipfile
 import zlib
 
 
-DATA = Path(__file__).resolve().parents[1] / "tests" / "data"
+DATA = Path(__file__).resolve().parent
 CHUNK = 1024 * 1024
 
 
@@ -110,13 +110,51 @@ def extract(entry, verify_only):
     return records
 
 
+def prepare_recording(manifest):
+    """Save the selected shank, reusing a previously verified conversion."""
+    recipe = manifest["recording"]
+    output = inside(DATA, recipe["output"])
+    inventory_path = DATA / "inventory.json"
+    if inventory_path.exists():
+        saved = json.loads(inventory_path.read_text(encoding="utf-8"))
+        generated = [entry for entry in saved["files"] if "url" not in entry]
+        if saved.get("manifest") == manifest and generated and all(
+            valid(inside(DATA, entry["path"]), {
+                "size": entry["size"], "checksum": "sha256:" + entry["sha256"]
+            }) for entry in generated
+        ):
+            print(f"Reusing verified recording: {output}", flush=True)
+            return generated
+
+    import spikeinterface as si
+    from spikeinterface.extractors import read_spikeglx
+
+    recording = read_spikeglx(
+        inside(DATA, recipe["source"]), stream_id=recipe["stream_id"]
+    )
+    shank = list(recording.split_by("group").values())[recipe["shank_index"]]
+    shank.save(folder=output, overwrite=True, n_jobs=1, progress_bar=False)
+    loaded = si.load(output)
+    print(f"Prepared {loaded}", flush=True)
+    return [
+        {"path": path.relative_to(DATA).as_posix(), "size": path.stat().st_size,
+         "sha256": checksum(path, "sha256")}
+        for path in sorted(output.rglob("*")) if path.is_file()
+    ]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--verify-only", action="store_true",
                         help="Check downloads and extracted files without network access.")
     args = parser.parse_args()
+    manifest = json.loads((DATA / "manifest.json").read_text(encoding="utf-8-sig"))
     if args.verify_only:
+        for entry in manifest["files"]:
+            fetch(entry, verify_only=True)
         inventory = json.loads((DATA / "inventory.json").read_text(encoding="utf-8-sig"))
+        if inventory.get("manifest") != manifest:
+            raise ValueError("Manifest changed; run the downloader to prepare the recording again.")
         verified = 0
         for entry in inventory["files"]:
             path = inside(DATA, entry["path"])
@@ -128,7 +166,6 @@ def main():
             verified += 1
         print(f"Verified {verified} local files against the SHA-256 inventory.")
         return
-    manifest = json.loads((DATA / "manifest.json").read_text(encoding="utf-8-sig"))
     entries = manifest["files"]
     total = sum(entry["size"] for entry in entries)
     print(f"{len(entries)} source files, {total / 1_000_000:.1f} MB", flush=True)
@@ -149,17 +186,13 @@ def main():
         })
         if "extract_to" in entry:
             inventory.extend(extract(entry, args.verify_only))
+    inventory.extend(prepare_recording(manifest))
     inventory_path = DATA / "inventory.json"
-    if args.verify_only:
-        saved = json.loads(inventory_path.read_text(encoding="utf-8"))["files"]
-        if saved != inventory:
-            raise ValueError("Local files differ from the saved SHA-256 inventory")
-    else:
-        inventory_path.write_text(
-            json.dumps({"schema_version": 1, "files": inventory}, indent=2) + "\n",
-            encoding="utf-8",
-        )
-    print(f"All {len(inventory)} downloaded/extracted files verified.", flush=True)
+    inventory_path.write_text(
+        json.dumps({"schema_version": 1, "manifest": manifest, "files": inventory}, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    print(f"All {len(inventory)} downloaded/prepared files verified.", flush=True)
 
 
 if __name__ == "__main__":

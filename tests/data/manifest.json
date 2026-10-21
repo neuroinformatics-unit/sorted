@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "neuropixels-2010-spikeglx/raw/run-001_g0_t0.imec0.ap.bin",
+      "url": "https://raw.githubusercontent.com/neuroinformatics-unit/spikewrap/a40a9df2cdb473c3bbf6ad7e6be961e2da328734/spikewrap/examples/example_tiny_data/spikeglx/rawdata/sub-001/ses-001/ephys/run-001_g0_imec0/run-001_g0_t0.imec0.ap.bin",
+      "size": 11550000,
+      "checksum": "sha256:1f75749c0006f62f564dc018c09f97187e1a27f2027e462545a95b46a35d3a62"
+    },
+    {
+      "path": "neuropixels-2010-spikeglx/raw/run-001_g0_t0.imec0.ap.meta",
+      "url": "https://raw.githubusercontent.com/neuroinformatics-unit/spikewrap/a40a9df2cdb473c3bbf6ad7e6be961e2da328734/spikewrap/examples/example_tiny_data/spikeglx/rawdata/sub-001/ses-001/ephys/run-001_g0_imec0/run-001_g0_t0.imec0.ap.meta",
+      "size": 22207,
+      "checksum": "sha256:8d37554abae37ab6f13c33f098383922d8f9f66bac7810a6d352bb1f5992f696"
+    }
+  ],
+  "recording": {
+    "source": "neuropixels-2010-spikeglx/raw",
+    "stream_id": "imec0.ap",
+    "shank_index": 0,
+    "output": "neuropixels-2010-spikeglx/si_recording"
+  }
+}

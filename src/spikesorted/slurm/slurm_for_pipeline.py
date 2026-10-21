@@ -45,6 +45,7 @@ def run_pipeline_with_slurm(
             )
             calls.append((pipeline.run, (), {}))
 
+        # TODO: set SLURM GPU resources based on the pipeline's needs_gpu().
         return run_slurm_batch(calls, project_path, num_cores, slurm_opts)
 
     configs = load_configs(config_path)

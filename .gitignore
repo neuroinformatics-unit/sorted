@@ -311,6 +311,7 @@ venv/
 /tests/data/cambridge-neurotech-64/
 
 /tests/data/.archives/
+/tests/data/inventory.json
 
 /examples/outputs/
 
