@@ -39,5 +39,7 @@
 
 ## Repository layout
 
+- Do not create or generate tests unless the user explicitly asks for them.
+
 - Use `src/spikesorted/` for Python source; keep `pyproject.toml`, `tests/`, and
   `docs/` at repository root. Run development commands from repository root.
