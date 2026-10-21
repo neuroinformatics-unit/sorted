@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from ..pipeline.pipeline import Pipeline
 from ..steps.bad_channel_detection.bad_channel_union import create_bad_channel_labels_union
 from ..utils import load_configs, split_recordings_by_shank
-from .slurm_runners import run_slurm_batch
+from .slurm_runners import run_slurm_batch, submit_slurm
 
 if TYPE_CHECKING:
     from ..steps.base import RecordingInput
@@ -16,6 +16,37 @@ if TYPE_CHECKING:
 # TODO: we need a unitmatching option here in which we will need to
 # take the union of bad channels even if we are not concatenating
 def run_pipeline_with_slurm(
+    recordings: RecordingInput | list[RecordingInput],
+    config_path: str | Path,
+    project_path: str | Path,
+    overwrite: bool = False,
+    num_cores: int = 1,
+    verbose: bool = True,
+    slurm_opts: dict | None = None,
+    coordinator_slurm_opts: dict | None = None,
+):
+    """Submit a coordinator job and return immediately with its job handle.
+
+    The coordinator submits worker arrays and waits for their results in SLURM.
+    slurm_opts configure workers; coordinator_slurm_opts configure the coordinator.
+    Its time limit must cover worker queueing and execution across all stages.
+    Call job.result() explicitly to wait and retrieve errors in the caller.
+    """
+    return submit_slurm(
+        _run_pipeline_with_slurm,
+        args=(recordings, config_path, project_path),
+        kwargs={
+            "overwrite": overwrite,
+            "num_cores": num_cores,
+            "verbose": verbose,
+            "slurm_opts": slurm_opts,
+        },
+        project_path=project_path,
+        slurm_opts=coordinator_slurm_opts,
+    )
+
+
+def _run_pipeline_with_slurm(
     recordings: RecordingInput | list[RecordingInput],
     config_path: str | Path,
     project_path: str | Path,

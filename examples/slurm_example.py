@@ -23,7 +23,7 @@ def main():
     run_name = f"{datetime.now():%Y-%m-%d_%H-%M-%S_%f}_{Path(__file__).stem}"
     project_path = repo_path / "examples" / "outputs" / run_name
 
-    run_pipeline_with_slurm(
+    job = run_pipeline_with_slurm(
         recordings=recordings,
         config_path=repo_path / "tests/test_integration/bad_channel_detection.yaml",
         project_path=project_path,
@@ -35,8 +35,15 @@ def main():
             "timeout_min": 10,
             "slurm_array_parallelism": 4,
         },
+        coordinator_slurm_opts={
+            "slurm_partition": "cpu",
+            "mem_gb": 4,
+            "timeout_min": 1440,  # Includes time waiting for workers to start.
+        },
     )
-    print(f"All jobs finished. Results and SLURM logs: {project_path}")
+    print(f"Coordinator job submitted: {job.job_id}")
+    print(f"Results and SLURM logs: {project_path}")
+    # job.result()  # Uncomment only if you want this caller to wait.
 
 
 if __name__ == "__main__":
