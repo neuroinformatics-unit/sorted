@@ -6,25 +6,54 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import yaml
-from pydantic import TypeAdapter
+
+from .validation.config_validation import validate_config
 
 if TYPE_CHECKING:
     from .steps.base import RecordingInput
 
 
 def load_configs(config_path: str | Path) -> dict:
-    """Read YAML and validate its top-level dictionary with Pydantic."""
+    """Read YAML and validate the implemented configuration sections."""
     with Path(config_path).open(encoding="utf-8") as file:
         loaded_config = yaml.safe_load(file)
 
-    return TypeAdapter(dict).validate_python(loaded_config, strict=True)
+    validate_config(loaded_config)
+    return loaded_config
+
+
+# TODO: try to combine this with the session/shank splitting in get_recordings_and_paths.
+def split_recordings_by_shank(
+    recordings: RecordingInput | list[RecordingInput],
+) -> list[RecordingInput | tuple[RecordingInput, str]]:
+    """Return one single-shank input per job, preserving session names."""
+    sessions = recordings if isinstance(recordings, list) else [recordings]
+    split_recordings = []
+    for session_idx, session_recording in enumerate(sessions):
+        if isinstance(session_recording, tuple):
+            session_recording, session_name = session_recording
+        else:
+            session_name = f"session_{session_idx}" if len(sessions) > 1 else None
+
+        if isinstance(session_recording, dict):
+            shanks = session_recording
+        else:
+            shanks = {"none": session_recording}
+
+        for shank_id, recording in shanks.items():
+            if session_name is None:
+                split_recordings.append({shank_id: recording})
+            else:
+                split_recordings.append(({shank_id: recording}, session_name))
+
+    return split_recordings
 
 
 def get_recordings_and_paths(
     recordings: RecordingInput | list[RecordingInput],
     project_path: str | Path, step_name: str
 ) -> list[tuple[str, str, RecordingInput, Path]]:
-    """Return session name, shank ID, recording and output path for each input."""
+    """Return input paths, retaining explicit session names even for one session."""
     if isinstance(recordings, list):
         sessions = recordings
     else:
@@ -40,7 +69,7 @@ def get_recordings_and_paths(
         else:
             session_name = f"session_{session_idx}"
 
-        if len(sessions) == 1:
+        if len(sessions) == 1 and not isinstance(sessions[0], tuple):
             session_path = step_path
         else:
             session_path = step_path / session_name

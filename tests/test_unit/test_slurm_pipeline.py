@@ -1,108 +1,98 @@
-"""Check orchestration ordering without submitting jobs to a real scheduler."""
+"""Check synchronization and session/shank grouping between pipeline stages."""
 
 import pytest
 
 from spikesorted.slurm import slurm_for_pipeline as slurm
 
 
-def configure_jobs(monkeypatch, config, fail_at=None):
-    events = []
-    submissions = []
-    monkeypatch.setattr(slurm, "load_configs", lambda path: config)
+def configure_jobs(monkeypatch, fail_at=None):
+    events, batches = [], []
+    monkeypatch.setattr(slurm, "load_configs", lambda path: {
+        "bad_channel_detection": {}, "combine_sessions": {},
+    })
 
-    class Job:
-        def __init__(self, stage, index):
-            self.stage = stage
-            self.index = index
-
-        def result(self):
-            events.append(("result", self.stage, self.index))
-            if (self.stage, self.index) == fail_at:
-                raise RuntimeError("Worker failed")
-            return self.stage, self.index
-
-    def submit(**kwargs):
-        stage = len(submissions)
-        submissions.append(kwargs)
+    def run_batch(calls, project_path, num_cores, slurm_opts):
+        stage = len(batches)
+        pipelines = [function.__self__ for function, args, kwargs in calls]
+        batches.append(pipelines)
         events.append(("submit", stage))
-        return [Job(stage, index) for index in range(2)]
+        for index in range(len(pipelines)):
+            events.append(("result", stage, index))
+            if (stage, index) == fail_at:
+                raise RuntimeError("Worker failed")
+        return list(range(len(pipelines)))
 
-    monkeypatch.setattr(slurm, "_submit_pipeline_jobs", submit)
+    monkeypatch.setattr(slurm, "run_slurm_batch", run_batch)
     monkeypatch.setattr(
         slurm, "create_bad_channel_labels_union",
-        lambda recordings, path: events.append(("union",)),
+        lambda recordings, path: events.append(("union", recordings, path)),
     )
-    return events, submissions
+    return events, batches
 
 
-def test_union_waits_for_all_detection_jobs_and_preprocessing_precedes_combine(
-    monkeypatch, tmp_path
-):
-    events, submissions = configure_jobs(
-        monkeypatch, {"bad_channel_detection": {}, "concatenate_sessions": {}}
-    )
-    recordings = [object(), object()]
+def test_detection_union_preprocessing_then_combination(monkeypatch, tmp_path):
+    events, batches = configure_jobs(monkeypatch)
+    a, b, c, d = [object() for _ in range(4)]
+    recordings = [
+        ({"left": a, "right": b}, "first"),
+        ({"right": d, "left": c}, "second"),
+    ]
     result = slurm.run_pipeline_with_slurm(
-        recordings, "config.yaml", tmp_path, num_cores=4, overwrite=True
+        recordings, "config.yaml", tmp_path, overwrite=True, num_cores=4,
     )
 
     assert events == [
-        ("submit", 0), ("result", 0, 0), ("result", 0, 1), ("union",),
-        ("submit", 1), ("result", 1, 0), ("result", 1, 1),
+        ("submit", 0), *(("result", 0, i) for i in range(4)),
+        ("union", recordings, tmp_path),
+        ("submit", 1), *(("result", 1, i) for i in range(4)),
         ("submit", 2), ("result", 2, 0), ("result", 2, 1),
     ]
-    assert submissions[0]["stop_at_step"] == "raw_data_quality_metrics"
-    assert submissions[1]["start_at_step"] == "raw_data_quality_metrics"
-    assert submissions[1]["stop_at_step"] == "concatenate_sessions"
-    assert submissions[2]["start_at_step"] == "concatenate_sessions"
-    assert submissions[2]["split_sessions"] is False
-    assert all(call["recordings"] is recordings for call in submissions)
-    assert all(call["num_cores"] == 4 for call in submissions)
-    assert all(call["overwrite"] is True for call in submissions)
-    assert result == [(2, 0), (2, 1)]
-
-
-def test_concatenation_without_detection_still_waits_before_combining(
-    monkeypatch, tmp_path
-):
-    events, submissions = configure_jobs(monkeypatch, {"concatenate_sessions": {}})
-    slurm.run_pipeline_with_slurm([object(), object()], "config.yaml", tmp_path)
-
-    assert events == [
-        ("submit", 0), ("result", 0, 0), ("result", 0, 1),
-        ("submit", 1), ("result", 1, 0), ("result", 1, 1),
+    assert all(p.start_at_step is None for p in batches[0])
+    assert all(p.stop_after_step == "bad_channel_detection" for p in batches[0])
+    assert all(p.start_at_step == "preprocessing" for p in batches[1])
+    assert all(p.stop_after_step == "preprocessing" for p in batches[1])
+    assert [p.recordings for p in batches[1]] == [p.recordings for p in batches[0]]
+    assert all(p.start_at_step == "combine_sessions" for p in batches[2])
+    assert all(p.stop_after_step is None for p in batches[2])
+    assert [p.recordings for p in batches[2]] == [
+        [({"left": a}, "first"), ({"left": c}, "second")],
+        [({"right": b}, "first"), ({"right": d}, "second")],
     ]
-    assert submissions[0]["start_at_step"] is None
-    assert submissions[0]["stop_at_step"] == "concatenate_sessions"
-    assert submissions[1]["split_sessions"] is False
+    for batch in batches:
+        assert all(p.project_path == tmp_path for p in batch)
+        assert all(p.num_cores == 4 and p.overwrite for p in batch)
+    assert result == [0, 1]
 
 
-@pytest.mark.parametrize("combine,sessions", [(False, 2), (True, 1)])
-def test_independent_sessions_run_without_aggregation(
-    monkeypatch, tmp_path, combine, sessions
-):
-    config = {"bad_channel_detection": {}}
-    if combine:
-        config["concatenate_sessions"] = {}
-    events, submissions = configure_jobs(monkeypatch, config)
-    slurm.run_pipeline_with_slurm([object()] * sessions, "config.yaml", tmp_path)
-
-    assert events == [("submit", 0), ("result", 0, 0), ("result", 0, 1)]
-    assert len(submissions) == 1
-    assert "start_at_step" not in submissions[0]
-    assert "stop_at_step" not in submissions[0]
-
-
-@pytest.mark.parametrize("failed_stage", [0, 1])
+@pytest.mark.parametrize("failed_stage", [0, 1, 2])
 def test_worker_failure_prevents_dependent_stages(monkeypatch, tmp_path, failed_stage):
-    events, submissions = configure_jobs(
-        monkeypatch, {"bad_channel_detection": {}, "concatenate_sessions": {}},
-        fail_at=(failed_stage, 1),
-    )
+    events, batches = configure_jobs(monkeypatch, fail_at=(failed_stage, 0))
     with pytest.raises(RuntimeError, match="Worker failed"):
         slurm.run_pipeline_with_slurm([object(), object()], "config.yaml", tmp_path)
 
-    assert len(submissions) == failed_stage + 1
-    assert events[-1] == ("result", failed_stage, 1)
+    assert len(batches) == failed_stage + 1
+    assert events[-1] == ("result", failed_stage, 0)
     if failed_stage == 0:
-        assert ("union",) not in events
+        assert not any(event[0] == "union" for event in events)
+
+
+def test_union_failure_prevents_preprocessing(monkeypatch, tmp_path):
+    _, batches = configure_jobs(monkeypatch)
+
+    def fail_union(recordings, project_path):
+        raise ValueError("Missing detection outputs")
+
+    monkeypatch.setattr(slurm, "create_bad_channel_labels_union", fail_union)
+    with pytest.raises(ValueError, match="Missing detection outputs"):
+        slurm.run_pipeline_with_slurm([object(), object()], "config.yaml", tmp_path)
+    assert len(batches) == 1
+
+
+def test_unsplit_sessions_combine_in_original_order(monkeypatch, tmp_path):
+    _, batches = configure_jobs(monkeypatch)
+    a, b = object(), object()
+    slurm.run_pipeline_with_slurm([a, b], "config.yaml", tmp_path)
+    assert len(batches[2]) == 1
+    assert batches[2][0].recordings == [
+        ({"none": a}, "session_0"), ({"none": b}, "session_1"),
+    ]

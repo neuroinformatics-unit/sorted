@@ -1,6 +1,20 @@
 """SLURM execution for the pipeline."""
 
+from __future__ import annotations
 
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+from ..pipeline.pipeline import Pipeline
+from ..steps.bad_channel_detection.bad_channel_union import create_bad_channel_labels_union
+from ..utils import load_configs, split_recordings_by_shank
+from .slurm_runners import run_slurm_batch
+
+if TYPE_CHECKING:
+    from ..steps.base import RecordingInput
+
+# TODO: we need a unitmatching option here in which we will need to
+# take the union of bad channels even if we are not concatenating
 def run_pipeline_with_slurm(
     recordings: RecordingInput | list[RecordingInput],
     config_path: str | Path,
@@ -8,14 +22,42 @@ def run_pipeline_with_slurm(
     overwrite: bool = False,
     num_cores: int = 1,
     verbose: bool = True,
+    slurm_opts: dict | None = None,
 ):
-  # if we are not concatenating sessions, or we are concatenating but not bad
-  # channel detection, then run all sessions / shanks in different slurm nodes
+    """Run independent session/shank pipelines as an array and await results.
 
-  # however, if we are running with concatentation things get more complex
+    Each job retains the project root and its session/shank identity.
+    slurm_opts are passed to Submitit's executor.update_parameters().
+    Combined sessions synchronize after detection and preprocessing.
+    """
+    def run_pipeline_in_slurm_batch(inputs, start_at_step=None, stop_after_step=None):
+        calls = []
+        for recording in inputs:
+            pipeline = Pipeline(
+                recordings=recording,
+                config_path=config_path,
+                project_path=project_path,
+                overwrite=overwrite,
+                num_cores=num_cores,
+                verbose=verbose,
+                start_at_step=start_at_step,
+                stop_after_step=stop_after_step,
+            )
+            calls.append((pipeline.run, (), {}))
 
-  # 1) run pipeline from 0 to detect bad channels in slurm, wait.
-  # 2) collect all into union
-  # run from bad channel detection to preprocessing in slurm
-  # 3) collect all and concatenate / combine
-  # 4) postprocessing on single recording.
+        return run_slurm_batch(calls, project_path, num_cores, slurm_opts)
+
+    configs = load_configs(config_path)
+    split_recordings = split_recordings_by_shank(recordings)
+
+    if "combine_sessions" not in configs or "bad_channel_detection" not in configs:
+        return run_pipeline_in_slurm_batch(split_recordings)
+    else:
+        # First we run bad channel detection across separate nodes before
+        # creating the union of all bad channels for later combination
+        run_pipeline_in_slurm_batch(
+            split_recordings, stop_after_step="bad_channel_detection"
+        )
+        create_bad_channel_labels_union(
+            recordings, project_path
+        )

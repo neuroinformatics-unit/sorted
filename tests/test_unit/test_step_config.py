@@ -19,12 +19,12 @@ def test_configuration_is_loaded_once_and_core_field_can_be_set(
 ):
     config_path = tmp_path / "config.yaml"
     config_path.write_text(
-        "detect_bad_channels:\n  method: coherence+psd\n", encoding="utf-8"
+        "bad_channel_detection:\n  method: coherence+psd\n", encoding="utf-8"
     )
     monkeypatch.setattr(step_class, "_resolve_num_cores", lambda self: 2)
     step = step_class("recording", config_path, tmp_path)
     config_path.write_text("changed: true\n", encoding="utf-8")
-    assert step.config == {"detect_bad_channels": {"method": "coherence+psd"}}
+    assert step.config == {"bad_channel_detection": {"method": "coherence+psd"}}
     assert step.config is step.config
     assert step._resolved_num_cores == 2
     with pytest.raises(FrozenInstanceError):

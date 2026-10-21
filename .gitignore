@@ -312,3 +312,5 @@ venv/
 
 /tests/data/.archives/
 
+/examples/outputs/
+

@@ -55,6 +55,7 @@ def _confirm_all_and_only_specified_bad_channel_files_exist(recordings_by_shank,
     step_path = Path(project_path) / "bad_channel_detection"
     existing_files = sorted(
         path for path in step_path.rglob("bad_channel_ids.csv")
+        if not path.is_relative_to(step_path / "session_unions")
     )
 
     if expected_files != existing_files:

@@ -54,9 +54,9 @@ def test_unsplit_recordings_group_together_despite_session_path_names(
     ) == {"none": expected}
 
 
-def test_single_split_session_omits_session_directory(tmp_path):
+def test_single_named_split_session_keeps_session_directory(tmp_path):
     a, b = make_recording(), make_recording()
-    root = tmp_path / "bad_channel_detection"
+    root = tmp_path / "bad_channel_detection" / "named_session"
 
     assert get_recordings_and_paths_by_shank(
         ({"0": a, "1": b}, "named_session"), tmp_path, "bad_channel_detection"

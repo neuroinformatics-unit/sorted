@@ -99,7 +99,7 @@ class BadChannelDetectionStep(BaseStep):
             bad_ids_df.to_csv(bad_ids_path, index=False)
             labels_df.to_csv(labels_path, index=False)
 
-        if "concatenate_sessions" in self.config and get_num_sessions(self.recordings) > 1:
+        if "combine_sessions" in self.config and get_num_sessions(self.recordings) > 1:
             create_bad_channel_labels_union(self.recordings, self.project_path)
 
     def get_bad_channel_ids_filepath(self, shank_path: Path) -> Path:

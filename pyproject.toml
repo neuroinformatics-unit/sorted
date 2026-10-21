@@ -12,6 +12,7 @@ dependencies = [
     "spikeinterface==0.105.3",
     "scipy==1.18.1",
     "pandas",
+    "submitit",
 ]
 
 license = "BSD-3-Clause"

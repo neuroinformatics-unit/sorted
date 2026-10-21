@@ -78,6 +78,16 @@ def test_single_session_union(tmp_path):
     assert read_ids(root / "session_unions/bad_channel_ids.csv") == ["1", "2"]
 
 
+def test_union_rerun_replaces_previous_union(tmp_path):
+    rec = recording()
+    root = tmp_path / "bad_channel_detection"
+    write_ids(root / "bad_channel_ids.csv", [1])
+    create_bad_channel_labels_union(rec, tmp_path)
+    write_ids(root / "bad_channel_ids.csv", [2])
+    create_bad_channel_labels_union(rec, tmp_path)
+    assert read_ids(root / "session_unions/bad_channel_ids.csv") == ["2"]
+
+
 @pytest.mark.parametrize("unexpected", [False, True])
 def test_file_mismatch_creates_no_union(tmp_path, unexpected):
     root = tmp_path / "bad_channel_detection"
