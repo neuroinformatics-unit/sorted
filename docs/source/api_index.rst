@@ -1,25 +1,10 @@
 API
 ===
 
-math
-----
+A generated Python API reference is coming soon. The current interfaces are:
 
-.. currentmodule:: spikesorted.math
+* ``spikesorted.pipeline.pipeline.Pipeline``: run the configured workflow with preloaded recordings.
+* ``spikesorted.steps.base.BasePipelineStep``: shared inputs and step interface.
+* ``spikesorted.steps.bad_channel_detection.bad_channel_detection.BadChannelDetectionStep``: detect bad channels and write per-recording outputs.
 
-.. autosummary::
-    :toctree: api_generated
-    :template: function.rst
-
-    add_two_integers
-    subtract_two_integers
-
-greetings
----------
-
-.. currentmodule:: spikesorted.greetings
-
-.. autosummary::
-    :toctree: api_generated
-    :template: class.rst
-
-    Greetings
+See the `source repository <https://github.com/neuroinformatics-unit/spikesorted>`_ for the implementation.

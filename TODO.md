@@ -1,0 +1,5 @@
+- TODO: reject multi-segment recordings; only one segment per recording is supported. Memory estimates may assume one segment (not one session).
+- TODO: validate that sampling frequency and channel count match across all recordings/shanks; memory estimation currently assumes they are identical.
+- TODOC: the convention is that each step will loop over all sessions and shanks provided. To parallelize, handle this at the level above.
+- TODO: for low channel count config e..g 32 don't use this bad channel detction method
+- TODO: Carry over relevant SLURM settings from SpikeWrap, keeping execution settings separate from PipelineConfig.

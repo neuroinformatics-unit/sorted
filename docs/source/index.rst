@@ -10,6 +10,8 @@ spikesorted
    :hidden:
    :maxdepth: 2
 
-   getting_started
-   tutorials/index
-   api_index
+   Get started <getting_started>
+   Tutorials <tutorials/index>
+   Understand the steps <steps/index>
+   Specification <specification/index>
+   API <api_index>
