@@ -1,44 +1,38 @@
 """Validate pipeline configuration using SpikeInterface's declared parameters."""
 
-from inspect import Parameter, signature
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import ConfigDict, TypeAdapter, create_model
-from spikeinterface.preprocessing import detect_bad_channels
+from pydantic import AfterValidator, ConfigDict, TypeAdapter, with_config
+from typing_extensions import TypedDict
 
-from .canonical_values import ALLOWED_STEPS
-
-
-BadChannelDetectionConfig = create_model(
-    "BadChannelDetectionConfig",
-    __config__=ConfigDict(extra="forbid", strict=True),
-    **{
-        name: (
-            parameter.annotation if parameter.annotation is not Parameter.empty else Any,
-            parameter.default if parameter.default is not Parameter.empty else ...,
-        )
-        for name, parameter in signature(detect_bad_channels, eval_str=True).parameters.items()
-        if name != "recording"
-        and parameter.kind in (Parameter.POSITIONAL_OR_KEYWORD, Parameter.KEYWORD_ONLY)
-    },
-)
-
-PipelineConfig = create_model(
-    "PipelineConfig",
-    __config__=ConfigDict(extra="forbid"),
-    **{step: (Any, None) for step in ALLOWED_STEPS},
-)
+from .steps_validation import _validate_bad_channel_config
 
 
-def validate_config(config: object) -> None:
-    """Raise on invalid configuration without changing the supplied values.
+@with_config(ConfigDict(extra="forbid", strict=True))
+class PipelineConfig(TypedDict, total=False):
+    """Optional pipeline sections; unimplemented sections accept any value."""
+
+    bad_channel_detection: Annotated[
+        dict[str, Any], AfterValidator(_validate_bad_channel_config)
+    ]
+    raw_data_quality_metrics: Any
+    artifact_detection: Any
+    artifact_curation: Any
+    preprocessing: Any
+    combine_sessions: Any
+    sorting: Any
+    postprocessing: Any
+    curation: Any
+
+
+_pipeline_config_adapter = TypeAdapter(PipelineConfig)
+
+
+def validate_config(config: object) -> PipelineConfig:
+    """Return a validated dictionary without adding defaults or coercing values.
 
     Other allowed sections remain unchanged until their validators are implemented.
-    Constraints absent from SI's annotations (such as method names) remain SI's
-    responsibility; unannotated parameters accept any value.
+    Apart from the unsupported neighborhood_r2 method, constraints absent from SI's
+    annotations remain SI's responsibility; unannotated parameters accept any value.
     """
-    TypeAdapter(dict).validate_python(config, strict=True)
-    PipelineConfig.model_validate(config)
-
-    if "bad_channel_detection" in config:
-        BadChannelDetectionConfig.model_validate(config["bad_channel_detection"])
+    return _pipeline_config_adapter.validate_python(config)

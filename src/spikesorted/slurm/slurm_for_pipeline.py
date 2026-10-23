@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING
 
 from ..pipeline.pipeline import Pipeline
 from ..steps.bad_channel_detection.bad_channel_union import create_bad_channel_labels_union
-from ..utils import load_configs, split_recordings_by_shank
+from ..utils.utils import load_pipeline_config
 from .slurm_runners import run_slurm_batch, submit_slurm
+from .slurm_utils import split_recordings_by_shank
 
 if TYPE_CHECKING:
     from ..steps.base import RecordingInput
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
 def run_pipeline_with_slurm(
     recordings: RecordingInput | list[RecordingInput],
     config_path: str | Path,
-    project_path: str | Path,
+    output_path: str | Path,
     overwrite: bool = False,
     num_cores: int = 1,
     verbose: bool = True,
@@ -34,14 +35,14 @@ def run_pipeline_with_slurm(
     """
     return submit_slurm(
         _run_pipeline_with_slurm,
-        args=(recordings, config_path, project_path),
+        args=(recordings, config_path, output_path),
         kwargs={
             "overwrite": overwrite,
             "num_cores": num_cores,
             "verbose": verbose,
             "slurm_opts": slurm_opts,
         },
-        project_path=project_path,
+        output_path=output_path,
         slurm_opts=coordinator_slurm_opts,
     )
 
@@ -49,7 +50,7 @@ def run_pipeline_with_slurm(
 def _run_pipeline_with_slurm(
     recordings: RecordingInput | list[RecordingInput],
     config_path: str | Path,
-    project_path: str | Path,
+    output_path: str | Path,
     overwrite: bool = False,
     num_cores: int = 1,
     verbose: bool = True,
@@ -67,7 +68,7 @@ def _run_pipeline_with_slurm(
             pipeline = Pipeline(
                 recordings=recording,
                 config_path=config_path,
-                project_path=project_path,
+                output_path=output_path,
                 overwrite=overwrite,
                 num_cores=num_cores,
                 verbose=verbose,
@@ -77,9 +78,9 @@ def _run_pipeline_with_slurm(
             calls.append((pipeline.run, (), {}))
 
         # TODO: set SLURM GPU resources based on the pipeline's needs_gpu().
-        return run_slurm_batch(calls, project_path, num_cores, slurm_opts)
+        return run_slurm_batch(calls, output_path, num_cores, slurm_opts)
 
-    configs = load_configs(config_path)
+    configs = load_pipeline_config(config_path)
     split_recordings = split_recordings_by_shank(recordings)
 
     if "combine_sessions" not in configs or "bad_channel_detection" not in configs:
@@ -91,5 +92,5 @@ def _run_pipeline_with_slurm(
             split_recordings, stop_after_step="bad_channel_detection"
         )
         create_bad_channel_labels_union(
-            recordings, project_path
+            recordings, output_path
         )

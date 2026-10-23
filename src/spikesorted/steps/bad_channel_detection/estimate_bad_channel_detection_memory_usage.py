@@ -7,7 +7,6 @@ process overhead and extractor caches. These are estimates, not universal bounds
 
 from inspect import signature
 
-import numpy as np
 import spikeinterface.preprocessing as spre
 from spikeinterface.core import BaseRecording
 from spikeinterface.preprocessing.filter import adjust_margin_ms_for_highpass
@@ -21,20 +20,19 @@ def _parameter(value, name: str):
 
 def estimate_filter_memory_usage(
     recording: BaseRecording, chunk_duration_s: float | None = None,
-    *, method: str | None = None, num_random_chunks: int | None = None,
+    *, freq_min: float, method: str | None = None, num_random_chunks: int | None = None,
 ) -> float:
-    """Return a filter scaling factor relative to one float64 trace chunk.
+    """Estimate the memory scaling factor of an input data chunk when HP filtering is performed.
 
-    Use SI's margin helper for the fixed 300 Hz high-pass filter. Allow 100
-    additional samples per side for SciPy padding (default order-5 SOS uses 18).
-    Budget six float64 buffers plus stored chunks for non-streaming detection
-    methods. No traces are loaded.
+    Consider the required margin size, and estimate 6 internal buffers. If another
+    other method except IBL is used, increase the factor to account for the fact
+    that all chunks are loaded in memory together.
     """
     fs = recording.get_sampling_frequency()
     chunk_duration_s = _parameter(chunk_duration_s, "chunk_duration_s")
     random_chunk_samples = int(fs * chunk_duration_s)
 
-    margin_samples = int(adjust_margin_ms_for_highpass(300) * fs / 1000)
+    margin_samples = int(adjust_margin_ms_for_highpass(freq_min) * fs / 1000)
     padded_samples = random_chunk_samples + 2 * margin_samples + 2 * 100
 
     factor = 6 * padded_samples / random_chunk_samples
@@ -47,14 +45,13 @@ def estimate_filter_memory_usage(
 def estimate_bad_channel_detection_memory_usage(
     recording: BaseRecording, chunk_duration_s: float | None = None,
     *, method: str | None = None, num_random_chunks: int | None = None,
-    neighborhood_r2_radius_um: float | None = None,
 ) -> float:
-    """Return a method-specific multiplier of one float64 trace chunk.
+    """"Estimate the memory scaling factor of an input data chunk when bad channel detection is performed.
 
-    Resolve only the selected method's options. Coherence+PSD budgets the Welch
-    spectrogram and trace copies. Std/MAD retain all sampled chunks. Neighbourhood
-    medians additionally allocate samples x channels x neighbours working arrays;
-    derive neighbour count from probe geometry and the configured radius.
+    The memory useage per chunk depends on the method. For each, the
+    total memory usage expressed as a scaling factor of the input chunk
+    memory size is esimtated. This is partly estiamted from the implmenetation
+    and partly from benchmarking,s ee benchmark tests.
     """
     method = _parameter(method, "method")
 
@@ -74,20 +71,4 @@ def estimate_bad_channel_detection_memory_usage(
     if method == "mad":
         # Includes SciPy's wrapper copy, absolute deviations and median copy.
         factor = 4 * num_random_chunks
-        return float(factor)
-
-    if method == "neighborhood_r2":
-        radius = _parameter(neighborhood_r2_radius_um, "neighborhood_r2_radius_um")
-        locations = recording.get_channel_locations()
-        max_neighbors = 0
-        for index, location in enumerate(locations):
-            distances = np.linalg.norm(locations - location, axis=1)
-            neighbors = distances < radius
-            neighbors[index] = False
-            max_neighbors = max(max_neighbors, int(np.count_nonzero(neighbors)))
-
-        # Retain all sampled chunks. Budget 16 chunk-sized buffers per neighbour
-        # and 16 more for other working arrays, including copies and medians.
-        # This is a conservative allowance, not an exact allocation count.
-        factor = num_random_chunks + 16 * (max_neighbors + 1)
         return float(factor)

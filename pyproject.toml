@@ -9,6 +9,7 @@ dynamic = ["version"]
 dependencies = [
     "PyYAML",
     "pydantic",
+    "typing_extensions",
     "spikeinterface==0.105.3",
     "scipy",
     "pandas",

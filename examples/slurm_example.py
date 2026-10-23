@@ -21,12 +21,12 @@ def main():
     # This fixture already contains one shank. For multiple shanks, each session
     # can instead be a dictionary: {"0": shank_0_recording, "1": shank_1_recording}.
     run_name = f"{datetime.now():%Y-%m-%d_%H-%M-%S_%f}_{Path(__file__).stem}"
-    project_path = repo_path / "examples" / "outputs" / run_name
+    output_path = repo_path / "examples" / "outputs" / run_name
 
     job = run_pipeline_with_slurm(
         recordings=recordings,
         config_path=repo_path / "tests/test_integration/bad_channel_detection.yaml",
-        project_path=project_path,
+        output_path=output_path,
         overwrite=False,
         num_cores=1,
         slurm_opts={
@@ -42,7 +42,7 @@ def main():
         },
     )
     print(f"Coordinator job submitted: {job.job_id}")
-    print(f"Results and SLURM logs: {project_path}")
+    print(f"Results and SLURM logs: {output_path}")
     # job.result()  # Uncomment only if you want this caller to wait.
 
 

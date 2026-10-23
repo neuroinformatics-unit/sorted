@@ -1,75 +1,75 @@
-"""Shared step inputs from the SPEC's implementation interface."""
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, ClassVar
 
-from pydantic import BaseModel, ConfigDict
 from spikeinterface.core import BaseRecording
 
-from ..utils import get_recordings_and_paths, load_configs
+from ..utils.recordings_structure import get_recordings_and_paths
+from ..utils.utils import load_pipeline_config
+from ..validation.steps_validation import _BaseStepArguments
 
 if TYPE_CHECKING:
-    RecordingInput = str | Path | BaseRecording | dict[str, BaseRecording]
-
-# TODO: reject multi-segment recordings; only one segment per recording is
-# supported. Memory estimates may assume one segment (not one session).
-# TODO: validate that sampling frequency and channel count match across all
-# recordings/shanks; memory estimation currently assumes they are identical.
-# TODOC: the convention is that each step will loop over all sessions and
-# shanks provided. To parallelize, handle this at the level above.
-# TODO: for low channel count config e..g 32 don't use this bad channel detction method
-
-
-class _BaseStepArguments(BaseModel):
-    """Validate shared constructor arguments without inspecting recordings."""
-
-    model_config = ConfigDict(strict=True)
-
-    config_path: str | Path
-    project_path: str | Path
-    overwrite: bool
-    num_cores: int
+    from ..utils.recordings_structure import RecordingInput
+    from ..validation.config_validation import PipelineConfig
 
 
 @dataclass(frozen=True)
-class BaseStep:
-    """Load configuration and resolve resources once during construction.
+class BasePipelineStep:
+    """The base PipelineStep that defines methods and sets up shared attributes.
 
-    The cached configuration is a mutable dictionary despite the frozen step.
-    File changes after construction do not update it. Automatic core resolution
-    remains unimplemented.
+    A frozen dataclass is used, to ensure attributes cannot easily be mutated.
+
+    Parameters
+    ----------
+
+    recordings
+        A RecordingsInput (either a recording, (recording, str), or {str: recording}
+        object, or list thereof).
+    config_path
+        The path to a YAML PipelineConfig.
+    output_path
+        The output path for the pipeline step. Outputs for every
+        session / shank in RecordingsInput will be saved here.
+    overwrite
+        If `True`, existing outputs found in `output_path`
+        will be deleted and overwritten.
+    num_cores
+        Number of cores to parallelize the step. Passed
+        to SpikeInterface's `job_kwargs`.
     """
 
     recordings: RecordingInput | list[RecordingInput]
     config_path: str | Path
-    project_path: str | Path
+    output_path: str | Path
     overwrite: bool = False
     num_cores: int = 1
 
-    _config: dict = field(init=False, repr=False, compare=False)
+    _highpass_freq_min: ClassVar[float] = 300
+
+    _config: PipelineConfig = field(init=False, repr=False, compare=False)
     _resolved_num_cores: int = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
-        """Cache validated configuration and resolved resources."""
+        """Validate all attributes and store loaded / computed attributes."""
         _BaseStepArguments.model_validate(
             {
+                "recordings": self.recordings,
                 "config_path": self.config_path,
-                "project_path": self.project_path,
+                "output_path": self.output_path,
                 "overwrite": self.overwrite,
                 "num_cores": self.num_cores,
             }
         )
-        loaded_config = load_configs(self.config_path)
+        loaded_config = load_pipeline_config(self.config_path)
         object.__setattr__(self, "_config", loaded_config)
 
         resolved_num_cores = self._resolve_num_cores()
         object.__setattr__(self, "_resolved_num_cores", resolved_num_cores)
 
     @property
-    def config(self) -> dict:
+    def config(self) -> PipelineConfig:
         """Return the dictionary loaded at construction, without rereading disk."""
         return self._config
 
@@ -126,6 +126,6 @@ class BaseStep:
         return [
             (recording, path)
             for _, _, recording, path in get_recordings_and_paths(
-                self.recordings, self.project_path, step_name
+                self.recordings, self.output_path, step_name
             )
         ]
