@@ -1,5 +1,0 @@
-bad_channel_detection:
-  method: coherence+psd
-  chunk_duration_s: 0.1
-  num_random_chunks: 5
-  seed: 42
