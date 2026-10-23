@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
+from pydantic import BaseModel, ConfigDict
 from spikeinterface.core import BaseRecording
 
 from ..utils import get_recordings_and_paths, load_configs
@@ -13,7 +14,6 @@ from ..utils import get_recordings_and_paths, load_configs
 if TYPE_CHECKING:
     RecordingInput = str | Path | BaseRecording | dict[str, BaseRecording]
 
-# TODO: set up pydantic validation
 # TODO: reject multi-segment recordings; only one segment per recording is
 # supported. Memory estimates may assume one segment (not one session).
 # TODO: validate that sampling frequency and channel count match across all
@@ -21,6 +21,18 @@ if TYPE_CHECKING:
 # TODOC: the convention is that each step will loop over all sessions and
 # shanks provided. To parallelize, handle this at the level above.
 # TODO: for low channel count config e..g 32 don't use this bad channel detction method
+
+
+class _BaseStepArguments(BaseModel):
+    """Validate shared constructor arguments without inspecting recordings."""
+
+    model_config = ConfigDict(strict=True)
+
+    config_path: str | Path
+    project_path: str | Path
+    overwrite: bool
+    num_cores: int
+
 
 @dataclass(frozen=True)
 class BaseStep:
@@ -42,6 +54,14 @@ class BaseStep:
 
     def __post_init__(self) -> None:
         """Cache validated configuration and resolved resources."""
+        _BaseStepArguments.model_validate(
+            {
+                "config_path": self.config_path,
+                "project_path": self.project_path,
+                "overwrite": self.overwrite,
+                "num_cores": self.num_cores,
+            }
+        )
         loaded_config = load_configs(self.config_path)
         object.__setattr__(self, "_config", loaded_config)
 
