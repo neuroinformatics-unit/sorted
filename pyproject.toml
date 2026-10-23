@@ -7,10 +7,10 @@ requires-python = ">=3.11.0"
 dynamic = ["version"]
 
 dependencies = [
-    "PyYAML>=6.0.2,<7",
-    "pydantic>=2.12.5,<3",
+    "PyYAML",
+    "pydantic",
     "spikeinterface==0.105.3",
-    "scipy==1.18.1",
+    "scipy",
     "pandas",
     "submitit",
 ]
