@@ -18,7 +18,7 @@ autodoc_mock_imports = []
 # Add the module path to sys.path here.
 # If the directory is relative to the documentation root,
 # use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath("../../src"))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../src")))
 
 project = "spikesorted"
 copyright = "2022, Joe Ziminski"
@@ -66,7 +66,7 @@ myst_enable_extensions = [
     "tasklist",
 ]
 # Automatically add anchors to markdown headings
-myst_heading_anchors = 3
+myst_heading_anchors = 4
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -83,6 +83,7 @@ exclude_patterns = [
     # to ensure that include files (partial pages) aren't built, exclude them
     # https://github.com/sphinx-doc/sphinx/issues/1965#issuecomment-124732907
     "**/includes/**",
+    "api_generated/**",  # Obsolete template API pages for removed example modules.
 ]
 
 # -- Options for HTML output -------------------------------------------------
@@ -131,5 +132,5 @@ html_css_files = ["css/landing.css", "css/docs.css"]
 html_js_files = ["js/landing.js"]
 html_sidebars = {"index": [], "**": ["sidebar-nav-bs"]}
 
-# Use the site palette by default; the theme switcher retains user preferences.
-html_context = {"default_mode": "dark"}
+# Start in light mode; the theme switcher retains user preferences.
+html_context = {"default_mode": "light"}

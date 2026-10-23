@@ -1,15 +1,98 @@
 <div class="spikesorted-home">
-  <section class="signal-hero" aria-labelledby="hero-title">
-    <canvas id="spike-field" aria-hidden="true"></canvas>
-    <div class="hero-content">
-      <div class="eyebrow"><span class="status-dot"></span> EXTRACELLULAR ELECTROPHYSIOLOGY</div>
-      <h1 id="hero-title">From raw recordings<br><span>to sorted spikes.</span></h1>
-      <p class="hero-description">spikesorted is an end-to-end pipeline for spike sorting<br>extracellular electrophysiology recordings.</p>
-      <div class="hero-actions">
-        <a class="signal-button primary" href="getting_started.html">Get started <span aria-hidden="true">→</span></a>
+  <p class="ss-intro">A configurable pipeline for extracellular electrophysiology, built on SpikeInterface.</p>
+  <p>Run the same analysis across recording sessions and shanks, with configuration files that are easy to share.</p>
+  <div class="ss-command"><pre aria-label="Command-line example"><code>spikesorted --sessions /data/session_a /data/session_b /data/session_c \
+    --config my_pipeline.yaml --slurm</code></pre><button class="ss-replay" type="button" hidden>Replay typing</button></div>
+
+  <nav class="ss-doc-nav" aria-label="Explore the documentation">
+    <div><a href="getting_started.html">Get started</a><p>Setup guide<br><small>Coming soon</small></p></div>
+    <div><a href="tutorials/index.html">Tutorials</a><p>Worked examples<br><small>Coming soon</small></p></div>
+    <div><a href="steps/index.html">Understand the steps</a><p>Scientific rationale</p></div>
+    <div><a href="specification/index.html">Specification</a><p>Implementation contracts</p></div>
+    <div><a href="api_index.html">API</a><p>Python interfaces</p></div>
+  </nav>
+
+  <section aria-labelledby="pipeline-title">
+    <h2 id="pipeline-title">Pipeline overview</h2>
+    <p>Apply a configured sequence of steps to your recordings.</p>
+    <figure class="ss-pipeline">
+      <div class="ss-flowchart" role="group" aria-label="Pipeline flow. Main sequence: data loading, detect bad channels, raw data quality metrics, artifact detection, preprocessing, spike sorting, postprocessing, curation. Side routes: artifact detection through artifact curation to preprocessing; preprocessing through combining multiple sessions to spike sorting.">
+        <svg class="ss-connectors" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <marker id="ss-main-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="var(--ss-flow-green)"/></marker>
+            <marker id="ss-side-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="var(--pst-color-text-muted)"/></marker>
+          </defs>
+          <g class="ss-main-paths" marker-end="url(#ss-main-arrow)">
+            <path d="M75 8V13"/>
+            <path d="M75 20V25"/>
+            <path d="M75 32V37"/>
+            <path d="M75 44V49"/>
+            <path d="M75 56V61"/>
+            <path d="M75 68V73"/>
+            <path d="M75 80V85"/>
+          </g>
+          <g class="ss-side-paths" marker-end="url(#ss-side-arrow)">
+            <path d="M52 40.5H46Q43 40.5 43 43.5V44Q43 46.5 40 46.5H36"/>
+            <path d="M36 48H39Q41 48 41 50V50.5Q41 52.5 44 52.5H52"/>
+            <path d="M52 54H48Q45 54 45 56V56.5Q45 58.5 42 58.5H36"/>
+            <path d="M36 60H39Q41 60 41 62V62.5Q41 64.5 44 64.5H52"/>
+          </g>
+        </svg>
+        <a class="ss-flow-node" style="--row:1%" href="specification/data-loader.html">Data loading</a>
+        <a class="ss-flow-node" style="--row:13%" href="steps/pipeline-steps.html#detect-bad-channels">Detect bad channels</a>
+        <a class="ss-flow-node" style="--row:25%" href="specification/implementation.html#raw-data-quality-metrics">Raw data quality metrics</a>
+        <a class="ss-flow-node" style="--row:37%" href="specification/implementation.html#artifact-detection">Artifact detection</a>
+        <a class="ss-flow-node" style="--row:49%" href="specification/implementation.html#preprocessing">Preprocessing</a>
+        <a class="ss-flow-node" style="--row:61%" href="specification/implementation.html#spike-sorting">Spike sorting</a>
+        <a class="ss-flow-node" style="--row:73%" href="specification/implementation.html#postprocessing">Postprocessing</a>
+        <a class="ss-flow-node" style="--row:85%" href="specification/implementation.html#curation">Curation</a>
+        <a class="ss-flow-node ss-flow-side" style="--row:43%" href="specification/implementation.html#artifact-curation">Artifact curation</a>
+        <a class="ss-flow-node ss-flow-side" style="--row:55%" href="specification/implementation.html#preprocessing">Combine multiple sessions</a>
       </div>
-      <div class="hero-meta"><span>OPEN SOURCE</span><span>PYTHON</span><span>IN DEVELOPMENT</span></div>
-    </div>
-    <div class="signal-caption"><button id="motion-toggle" type="button" aria-pressed="false" hidden>Pause animation</button></div>
+      <figcaption>Explore each step in the pipeline specification. Side routes show artifact curation and multi-session processing.</figcaption>
+    </figure>
+    <h3>Configuration files</h3>
+    <p>Select from pre-registered configuration files or create your own. Custom YAML configurations are supported now; the pre-registered collection is planned.</p>
+    <p>See the <a href="specification/config.html">configuration specification</a> for the current format.</p>
   </section>
+
+  <section aria-labelledby="outputs-title">
+    <h2 id="outputs-title">Organised outputs</h2>
+    <div class="ss-output-grid">
+      <div><p>Bad-channel outputs are organised by session and shank, under the output folder you choose.</p>
+        <ul><li>CSV files contain channel IDs and labels for each recording.</li><li>Session unions include the contributing session names and generation date in YAML.</li></ul>
+        <p>This example shows two sessions and shank 0, with session combination enabled. Unsplit recordings omit the shank folder.</p>
+        <p>See the <a href="specification/on-disk-structure.html">output layout</a>.</p>
+      </div>
+      <figure class="ss-folder-schematic" aria-labelledby="ss-folders-caption"><svg class="ss-file-symbols" aria-hidden="true"><defs>
+  <symbol id="ss-folder-symbol" viewBox="0 0 32 28"><path d="M2 6V3h11l4 4h13v18H2Z" fill="currentColor" opacity=".55"/><path d="M1 10h30l-4 16H4Z" fill="currentColor"/><path d="M4 11h24" stroke="white" stroke-opacity=".5"/></symbol>
+  <symbol id="ss-file-symbol" viewBox="0 0 24 28"><path d="M4 1h10l6 6v20H4Z" fill="var(--pst-color-background)" stroke="currentColor"/><path d="M14 1v7h6M7 13h10M7 17h10M7 21h7" fill="none" stroke="currentColor"/></symbol>
+</defs></svg><ul class="ss-folder-tree"><li><div class="ss-folder-row ss-kind-folder"><svg aria-hidden="true"><use href="#ss-folder-symbol"/></svg><span class="ss-folder-name">output_path</span><span class="ss-folder-note">output root</span></div><ul><li><div class="ss-folder-row ss-kind-folder"><svg aria-hidden="true"><use href="#ss-folder-symbol"/></svg><span class="ss-folder-name">bad_channel_detection</span><span class="ss-folder-note">pipeline step</span></div><ul><li><div class="ss-folder-row ss-kind-session"><svg aria-hidden="true"><use href="#ss-folder-symbol"/></svg><span class="ss-folder-name">session_a</span><span class="ss-folder-note">recording session</span></div><ul><li><div class="ss-folder-row ss-kind-shank"><svg aria-hidden="true"><use href="#ss-folder-symbol"/></svg><span class="ss-folder-name">shank_0</span><span class="ss-folder-note">probe shank</span></div><ul><li><div class="ss-folder-row ss-kind-csv"><svg aria-hidden="true"><use href="#ss-file-symbol"/></svg><span class="ss-folder-name">bad_channel_ids.csv</span></div></li><li><div class="ss-folder-row ss-kind-csv"><svg aria-hidden="true"><use href="#ss-file-symbol"/></svg><span class="ss-folder-name">bad_channel_labels.csv</span></div></li></ul></li></ul></li><li><div class="ss-folder-row ss-kind-session"><svg aria-hidden="true"><use href="#ss-folder-symbol"/></svg><span class="ss-folder-name">session_b</span><span class="ss-folder-note">recording session</span></div><ul><li><div class="ss-folder-row ss-kind-shank"><svg aria-hidden="true"><use href="#ss-folder-symbol"/></svg><span class="ss-folder-name">shank_0</span><span class="ss-folder-note">probe shank</span></div><ul><li><div class="ss-folder-row ss-kind-csv"><svg aria-hidden="true"><use href="#ss-file-symbol"/></svg><span class="ss-folder-name">bad_channel_ids.csv</span></div></li><li><div class="ss-folder-row ss-kind-csv"><svg aria-hidden="true"><use href="#ss-file-symbol"/></svg><span class="ss-folder-name">bad_channel_labels.csv</span></div></li></ul></li></ul></li><li><div class="ss-folder-row ss-kind-union"><svg aria-hidden="true"><use href="#ss-folder-symbol"/></svg><span class="ss-folder-name">session_unions</span><span class="ss-folder-note">combined decisions</span></div><ul><li><div class="ss-folder-row ss-kind-shank"><svg aria-hidden="true"><use href="#ss-folder-symbol"/></svg><span class="ss-folder-name">shank_0</span><span class="ss-folder-note">probe shank</span></div><ul><li><div class="ss-folder-row ss-kind-csv"><svg aria-hidden="true"><use href="#ss-file-symbol"/></svg><span class="ss-folder-name">bad_channel_ids.csv</span></div></li><li><div class="ss-folder-row ss-kind-yaml"><svg aria-hidden="true"><use href="#ss-file-symbol"/></svg><span class="ss-folder-name">sessions.yaml</span></div></li></ul></li></ul></li></ul></li></ul></li></ul><figcaption id="ss-folders-caption">Two sessions, one shank, and their combined bad-channel decisions. Folder colours distinguish sessions, shanks and session unions; file icons mark CSV and YAML outputs.</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="python-input" aria-labelledby="python-title">
+    <h2 id="python-title">Use preloaded SpikeInterface recordings</h2>
+    <p>Load recordings with SpikeInterface, then pass them into the Python API. Use a single recording, named sessions, or recordings already split by shank.</p>
+    <p>This example runs bad-channel detection using your own YAML configuration.</p>
+    <pre><code><span class="ss-code-flag">import</span> spikeinterface <span class="ss-code-flag">as</span> si
+<span class="ss-code-flag">from</span> spikesorted.pipeline.pipeline <span class="ss-code-flag">import</span> Pipeline
+
+recording = si.load(<span class="ss-code-string">"/data/saved_recording"</span>)
+
+Pipeline(
+    recordings=recording,
+    config_path=<span class="ss-code-string">"my_pipeline.yaml"</span>,
+    output_path=<span class="ss-code-string">"/results/subject_01"</span>,
+    stop_after_step=<span class="ss-code-string">"bad_channel_detection"</span>,
+).run()</code></pre>
+    <details><summary>Minimal my_pipeline.yaml</summary><pre><code>bad_channel_detection:
+  method: coherence+psd</code></pre></details>
+  </section>
+
+  <section aria-labelledby="dashboard-title">
+    <h2 id="dashboard-title">Dashboard coming soon</h2>
+    <p>A dedicated view of your pipeline results.</p>
+  </section>
+  <p class="ss-project-links">An open-source project from the <a href="https://neuroinformatics.dev/">Neuroinformatics Unit</a>. <a href="https://github.com/neuroinformatics-unit/spikesorted">View on GitHub</a>.</p>
 </div>
